@@ -24,6 +24,7 @@ public static class AgentLoop
                     },
                 }
             );
+            messages.Clear();
 
             if (response.ToolCalls is { Count: > 0 })
             {
@@ -53,9 +54,14 @@ public static class AgentLoop
             
             case "read_file":
             {
-                var tool_arguments = JsonSerializer.Deserialize<ReadFileArguments>(toolCall.FunctionArguments);
-                if (tool_arguments is null) throw new Exception("Invalid tool arguments.");
-                var content = File.ReadAllText(tool_arguments.file_path);
+                var args = JsonSerializer.Deserialize<ReadFileArguments>(toolCall.FunctionArguments);
+                if (args is null) throw new Exception("Invalid tool arguments.");
+                Console.Error.WriteLine($"Reading file '{args.file_path}' ...");
+                var content = File.ReadAllText(args.file_path);
+                
+                Console.Error.WriteLine("\"\"\"");
+                Console.Error.WriteLine(content);
+                Console.Error.WriteLine("\"\"\"");
                 return content;
             }
 

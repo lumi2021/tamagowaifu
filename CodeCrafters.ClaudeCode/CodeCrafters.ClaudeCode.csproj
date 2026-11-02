@@ -15,6 +15,7 @@
   <ItemGroup>
     <None Update="Assets\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </None>
   </ItemGroup>
 
