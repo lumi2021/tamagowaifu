@@ -22,6 +22,7 @@ public static class AgentLoop
                     {
                         ToolManager.currentTimeTool,
                         ToolManager.readFileTool,
+                        ToolManager.writeFileTool,
                     },
                 }
             );

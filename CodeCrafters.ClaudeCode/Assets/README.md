@@ -1,3 +1,3 @@
-This is a simple python project.
-- The starting point of this project is app/init.py.
-- The file app/expiry.py contains chemical properties.
+This is a very simple python project.
+This should print "Hello world"
+This project should contain only one file: app/start.py.
