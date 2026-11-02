@@ -2,11 +2,6 @@ using OpenAI.Chat;
 
 namespace CodeCrafters.ClaudeCode.Tools;
 
-public sealed class ReadFileArguments
-{
-    public required string file_path { get; set; }
-}
-
 public static class ToolManager
 {
     public static readonly ChatTool currentTimeTool = ChatTool.CreateFunctionTool(
