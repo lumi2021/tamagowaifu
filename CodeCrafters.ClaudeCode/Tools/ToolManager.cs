@@ -2,6 +2,11 @@ using OpenAI.Chat;
 
 namespace CodeCrafters.ClaudeCode.Tools;
 
+public sealed class ReadFileArguments
+{
+    public required string file_path { get; set; }
+}
+
 public static class ToolManager
 {
     public static readonly ChatTool currentTimeTool = ChatTool.CreateFunctionTool(
@@ -17,7 +22,7 @@ public static class ToolManager
             """)
     );
     public static readonly ChatTool readFileTool = ChatTool.CreateFunctionTool(
-        functionName: "Read",
+        functionName: "read_file",
         functionDescription: "Read and return the contents of a file",
         functionParameters: BinaryData.FromString(
             """

@@ -12,4 +12,10 @@
     <PackageReference Include="OpenAI" Version="2.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

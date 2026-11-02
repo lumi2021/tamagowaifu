@@ -1,6 +1,7 @@
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
+using System.Text.Json;
 using CodeCrafters.ClaudeCode;
 using CodeCrafters.ClaudeCode.Models;
 using CodeCrafters.ClaudeCode.Tools;
@@ -28,14 +29,36 @@ ChatCompletion response = client.CompleteChat(
     new ChatCompletionOptions
     {
         Tools = {
-            //ToolManager.currentTimeTool,
+            ToolManager.currentTimeTool,
             ToolManager.readFileTool,
         },
     }
 );
 
-if (response.Content == null || response.Content.Count == 0)
-    throw new Exception("No choices in response");
+if (response.ToolCalls is { Count: > 0 })
+{
+    foreach (var toolCall in response.ToolCalls)
+    {
+        switch (toolCall.FunctionName)
+        {
+            case "read_file":
+            {
+                var tool_arguments = JsonSerializer.Deserialize<ReadFileArguments>(toolCall.FunctionArguments);
+                if (tool_arguments is null) throw new Exception("Invalid tool arguments.");
+                var content = File.ReadAllText(tool_arguments.file_path);
+                
+                Console.WriteLine(content);
+            } break;
+            
+            default:
+                throw new Exception("Unknown function: " + toolCall.FunctionName);
+        }
+    }
+}
+else if (response.Content is { Count: > 0 })
+{
+    Console.WriteLine(response.Content[0].Text);    
+}
+else throw new Exception("No choices in response");
 
-//Console.Write("AI: ");
-Console.WriteLine(response.Content[0].Text);
+Console.WriteLine("[Finished]");
