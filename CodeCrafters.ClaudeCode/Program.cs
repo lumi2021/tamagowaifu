@@ -22,7 +22,7 @@ if (string.IsNullOrEmpty(apiKey))
 
 var client = ModelManager.GetChatClient(model);
 
-Console.WriteLine($"User: {prompt}");
+//Console.WriteLine($"User: {prompt}");
 ChatCompletion response = client.CompleteChat(
     [new UserChatMessage(prompt)],
     new ChatCompletionOptions
@@ -37,5 +37,5 @@ ChatCompletion response = client.CompleteChat(
 if (response.Content == null || response.Content.Count == 0)
     throw new Exception("No choices in response");
 
-Console.Write("AI: ");
+//Console.Write("AI: ");
 Console.WriteLine(response.Content[0].Text);
