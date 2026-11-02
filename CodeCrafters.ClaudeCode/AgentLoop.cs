@@ -24,7 +24,7 @@ public static class AgentLoop
                     },
                 }
             );
-            messages.Clear();
+            messages.Add(new AssistantChatMessage(response));
 
             if (response.ToolCalls is { Count: > 0 })
             {
