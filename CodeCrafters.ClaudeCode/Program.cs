@@ -47,7 +47,7 @@ if (response.ToolCalls is { Count: > 0 })
                 if (tool_arguments is null) throw new Exception("Invalid tool arguments.");
                 var content = File.ReadAllText(tool_arguments.file_path);
                 
-                Console.WriteLine(content);
+                Console.Write(content);
             } break;
             
             default:
@@ -57,8 +57,8 @@ if (response.ToolCalls is { Count: > 0 })
 }
 else if (response.Content is { Count: > 0 })
 {
-    Console.WriteLine(response.Content[0].Text);    
+    Console.Write(response.Content[0].Text);    
 }
 else throw new Exception("No choices in response");
 
-Console.WriteLine("[Finished]");
+//Console.WriteLine("[Finished]");
