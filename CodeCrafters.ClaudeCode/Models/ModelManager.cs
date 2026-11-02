@@ -21,6 +21,11 @@ public static class ModelManager
                 "https://integrate.api.nvidia.com/v1"
             ),
 
+            ModelProvider.Ollama => (
+                "ollama",
+                Environment.GetEnvironmentVariable("OLLAMA_BASE_URL") ?? "http://localhost:11434/v1"
+            ),
+            
             _ => throw new NotSupportedException($"Provider '{model.Provider}' is not supported."),
         };
 

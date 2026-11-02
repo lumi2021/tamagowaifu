@@ -33,4 +33,29 @@ public static class ToolManager
             }
             """)
     );
+    
+    public static readonly ChatTool writeFileTool = ChatTool.CreateFunctionTool(
+        functionName: "write_file",
+        functionDescription: "Write the contents of a file",
+        functionParameters: BinaryData.FromString(
+            """
+            {
+              "type": "object",
+              "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "The path to write into"
+                },
+                "file_content": {
+                "type": "string",
+                "description": "The file content"
+            }
+              },
+              "required": [
+                "file_path",
+                "file_content"
+              ]
+            }
+            """)
+    );
 }

@@ -10,6 +10,8 @@ public static class ModelRegistry
         ["nemotron"] = new ModelDefinition("nemotron", "nvidia/nemotron-3-ultra-550b-a55b:free", ModelProvider.OpenRouter),
         ["gemma"]    = new ModelDefinition("gemma", "google/gemma-4-26b-a4b-it:free", ModelProvider.OpenRouter),
         ["free"]     = new ModelDefinition("free", "openrouter/free", ModelProvider.OpenRouter),
+        
+        ["local"] = new ModelDefinition("local", "qwen2.5:3b", ModelProvider.Ollama),
     };
 
     public static ModelDefinition? Resolve(string alias) => Models.GetValueOrDefault(alias);

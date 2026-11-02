@@ -8,11 +8,12 @@ public static class AgentLoop
 {
     public static void Execute(ChatClient client, string prompt)
     {
-        List<ChatMessage> messages = [];
-        messages.Add(new UserChatMessage(prompt));
-
+        List<ChatMessage> messages = [new UserChatMessage(prompt)];
+        Console.Error.WriteLine($"User: {prompt}");
+        
         while (true)
         {
+            Console.Error.WriteLine();
             ChatCompletion response = client.CompleteChat(
                 [..messages],
                 new ChatCompletionOptions
@@ -31,7 +32,7 @@ public static class AgentLoop
                 foreach (var toolCall in response.ToolCalls)
                 {
                     var result = ExecuteTool(toolCall);
-                    messages.Add(new ToolChatMessage(toolCall.Id, result));
+                    messages.Add(new ToolChatMessage(toolCall.Id, result.Content));
                 }
             }
             else if (response.Content is { Count: > 0 })
@@ -43,7 +44,7 @@ public static class AgentLoop
         }
     }
 
-    private static string ExecuteTool(ChatToolCall toolCall)
+    private static ToolResult ExecuteTool(ChatToolCall toolCall)
     {
         switch (toolCall.FunctionName)
         {
@@ -55,22 +56,49 @@ public static class AgentLoop
             case "read_file":
             {
                 var args = JsonSerializer.Deserialize<ReadFileArguments>(toolCall.FunctionArguments);
-                if (args is null) throw new Exception("Invalid tool arguments.");
+                if (args is null) return ToolResult.Error("Invalid tool arguments.");
+                
+                if (!File.Exists(args.file_path)) return ToolResult.Error($"File {args.file_path} does not exist.");
+                
                 Console.Error.WriteLine($"Reading file '{args.file_path}' ...");
                 var content = File.ReadAllText(args.file_path);
                 
                 Console.Error.WriteLine("\"\"\"");
                 Console.Error.WriteLine(content);
                 Console.Error.WriteLine("\"\"\"");
+                
                 return content;
+            }
+            
+            case "write_file":
+            {
+                var args = JsonSerializer.Deserialize<WriteFileArguments>(toolCall.FunctionArguments);
+                if (args is null) return ToolResult.Error("Invalid tool arguments.");
+                
+                Console.Error.WriteLine($"Writing file '{args.file_path}' ...");
+                File.WriteAllText(args.file_path, args.file_content);
+                
+                Console.Error.WriteLine("\"\"\"");
+                Console.Error.WriteLine(args.file_content);
+                Console.Error.WriteLine("\"\"\"");
+                
+                return "Success";
             }
 
             default: throw new Exception("Unknown function: " + toolCall.FunctionName);
         }
     }
     
-    public sealed class ReadFileArguments
+    public record struct ToolResult(bool Success, string Content) 
     {
-        public required string file_path { get; set; }
+        public static ToolResult Ok(string content) => new(true, content);
+        public static ToolResult Error(string message) => new(false, message);
+        
+        public static implicit operator ToolResult(string content) => Ok(content);
+        
+        public string ToMessage() => JsonSerializer.Serialize(this);
     }
+
+    public sealed record ReadFileArguments(string file_path);
+    public sealed record WriteFileArguments(string file_path, string file_content);
 }

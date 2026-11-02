@@ -4,4 +4,5 @@ public enum ModelProvider
 {
     OpenRouter,
     Nvidia,
+    Ollama,
 }
