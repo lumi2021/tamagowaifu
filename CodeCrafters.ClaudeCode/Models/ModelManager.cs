@@ -21,7 +21,7 @@ public static class ModelManager
                 "https://integrate.api.nvidia.com/v1"
             ),
 
-            _ => throw new NotSupportedException($"Provider '{model.Provider}' is not supported.")
+            _ => throw new NotSupportedException($"Provider '{model.Provider}' is not supported."),
         };
 
         if (string.IsNullOrWhiteSpace(apiKey))

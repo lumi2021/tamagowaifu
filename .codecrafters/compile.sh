@@ -8,4 +8,4 @@
 
 set -e # Exit on failure
 
-dotnet build --configuration Release --output /tmp/codecrafters-build-csharp CodeCrafters.ClaudeCode.csproj
+dotnet build --configuration Release --output /tmp/codecrafters-build-csharp CodeCrafters.ClaudeCode/CodeCrafters.ClaudeCode.csproj
