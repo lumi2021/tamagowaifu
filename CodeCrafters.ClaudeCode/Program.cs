@@ -1,7 +1,3 @@
-using OpenAI;
-using OpenAI.Chat;
-using System.ClientModel;
-using System.Text.Json;
 using CodeCrafters.ClaudeCode;
 using CodeCrafters.ClaudeCode.Models;
 using CodeCrafters.ClaudeCode.Tools;
@@ -22,5 +18,12 @@ if (string.IsNullOrEmpty(apiKey))
     throw new Exception("OPENROUTER_API_KEY is not set");
 
 var client = ModelManager.GetChatClient(model);
+var toolSet = new ToolSet(
+    ToolRegistry.GetCurrentTime,
+    ToolRegistry.ReadFile,
+    ToolRegistry.WriteFile,
+    ToolRegistry.RunBashCmd
+);
 
-AgentLoop.Execute(client, prompt);
+var agent = new AgentLoop(client, toolSet);
+agent.Execute(prompt);

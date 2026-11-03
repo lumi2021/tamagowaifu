@@ -4,11 +4,15 @@ using OpenAI.Chat;
 
 namespace CodeCrafters.ClaudeCode;
 
-public static class AgentLoop
+public class AgentLoop(ChatClient client, ToolSet toolSet)
 {
-    public static void Execute(ChatClient client, string prompt)
+    public void Execute(string prompt)
     {
         List<ChatMessage> messages = [new UserChatMessage(prompt)];
+        ChatCompletionOptions chatCompletionOptions = new();
+
+        foreach (var i in toolSet.AvailableTools) chatCompletionOptions.Tools.Add(i);
+        
         Console.Error.WriteLine($"User: {prompt}");
         
         while (true)
@@ -16,90 +20,32 @@ public static class AgentLoop
             Console.Error.WriteLine();
             ChatCompletion response = client.CompleteChat(
                 [..messages],
-                new ChatCompletionOptions
-                {
-                    Tools =
-                    {
-                        ToolManager.currentTimeTool,
-                        ToolManager.readFileTool,
-                        ToolManager.writeFileTool,
-                    },
-                }
+                chatCompletionOptions
             );
             messages.Add(new AssistantChatMessage(response));
 
+            // If there is any message
+            if (response.Content is { Count: > 0 })
+                foreach (var content in response.Content)
+                {
+                    if (string.IsNullOrWhiteSpace(content.Text)) continue;
+                    Console.Error.Write("Assistent: ");
+                    Console.Error.WriteLine(content.Text);
+                }
+            
+            // If there is any tool call
             if (response.ToolCalls is { Count: > 0 })
-            {
                 foreach (var toolCall in response.ToolCalls)
                 {
-                    var result = ExecuteTool(toolCall);
+                    var toolName = toolCall.FunctionName;
+                    var result = toolSet.TryExecute(toolName, toolCall.FunctionArguments);
                     messages.Add(new ToolChatMessage(toolCall.Id, result.Content));
                 }
-            }
-            else if (response.Content is { Count: > 0 })
-            {
-                Console.Write(response.Content[0].Text);
-                break;
-            }
-            else throw new Exception("No choices in response");
+            
+            if (response.FinishReason == ChatFinishReason.Stop) break;
+            if (response.FinishReason == ChatFinishReason.ToolCalls) continue;
+
+            throw new ArgumentOutOfRangeException(response.FinishReason.ToString());
         }
     }
-
-    private static ToolResult ExecuteTool(ChatToolCall toolCall)
-    {
-        switch (toolCall.FunctionName)
-        {
-            case "get_current_time":
-            {
-                return DateTime.Now.ToString("O");
-            }
-            
-            case "read_file":
-            {
-                var args = JsonSerializer.Deserialize<ReadFileArguments>(toolCall.FunctionArguments);
-                if (args is null) return ToolResult.Error("Invalid tool arguments.");
-                
-                if (!File.Exists(args.file_path)) return ToolResult.Error($"File {args.file_path} does not exist.");
-                
-                Console.Error.WriteLine($"Reading file '{args.file_path}' ...");
-                var content = File.ReadAllText(args.file_path);
-                
-                Console.Error.WriteLine("\"\"\"");
-                Console.Error.WriteLine(content);
-                Console.Error.WriteLine("\"\"\"");
-                
-                return content;
-            }
-            
-            case "write_file":
-            {
-                var args = JsonSerializer.Deserialize<WriteFileArguments>(toolCall.FunctionArguments);
-                if (args is null) return ToolResult.Error("Invalid tool arguments.");
-                
-                Console.Error.WriteLine($"Writing file '{args.file_path}' ...");
-                File.WriteAllText(args.file_path, args.file_content);
-                
-                Console.Error.WriteLine("\"\"\"");
-                Console.Error.WriteLine(args.file_content);
-                Console.Error.WriteLine("\"\"\"");
-                
-                return "Success";
-            }
-
-            default: throw new Exception("Unknown function: " + toolCall.FunctionName);
-        }
-    }
-    
-    public record struct ToolResult(bool Success, string Content) 
-    {
-        public static ToolResult Ok(string content) => new(true, content);
-        public static ToolResult Error(string message) => new(false, message);
-        
-        public static implicit operator ToolResult(string content) => Ok(content);
-        
-        public string ToMessage() => JsonSerializer.Serialize(this);
-    }
-
-    public sealed record ReadFileArguments(string file_path);
-    public sealed record WriteFileArguments(string file_path, string file_content);
 }
