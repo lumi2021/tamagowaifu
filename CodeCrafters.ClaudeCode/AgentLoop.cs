@@ -29,7 +29,8 @@ public class AgentLoop(ChatClient client, ToolSet toolSet)
                 foreach (var content in response.Content)
                 {
                     if (string.IsNullOrWhiteSpace(content.Text)) continue;
-                    Console.WriteLine(content.Text);
+                    Console.Error.Write("Assistent: ");
+                    Console.Error.WriteLine(content.Text);
                 }
             
             // If there is any tool call
@@ -41,7 +42,12 @@ public class AgentLoop(ChatClient client, ToolSet toolSet)
                     messages.Add(new ToolChatMessage(toolCall.Id, result.Content));
                 }
             
-            if (response.FinishReason == ChatFinishReason.Stop) break;
+            if (response.FinishReason == ChatFinishReason.Stop)
+            {
+                foreach (var content in response.Content) Console.WriteLine(content.Text);
+                break;
+            }
+            
             if (response.FinishReason == ChatFinishReason.ToolCalls) continue;
 
             throw new ArgumentOutOfRangeException(response.FinishReason.ToString());
