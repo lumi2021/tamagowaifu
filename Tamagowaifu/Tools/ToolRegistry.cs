@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
-using OpenAI.Chat;
 
 namespace CodeCrafters.ClaudeCode.Tools;
 
@@ -29,13 +28,19 @@ public static class ToolRegistry
 {
     public static readonly ToolDescriptor GetCurrentTime = new (
         "get_current_time", "Returns the current system date and time",
-        ExecuteGetCurrentTyme
+        ExecuteGetCurrentTime
     );
 
+    public static readonly ToolDescriptor ListDirectory = new (
+        "list_directory", "Lists the contents of a directory",
+        ExecuteListDirectory,
+        new ToolParameter(ToolParameterType.String, "dir_path", "The path to the desired directory", true)
+    );
+    
     public static readonly ToolDescriptor ReadFile = new (
         "read_file", "Read and return the contents of a file",
         ExecuteReadFile,
-        new ToolParameter(ToolParameterType.String, "file_path", "The path to the file to read", true)
+        new ToolParameter(ToolParameterType.String, "file_path", "The path to the desired file", true)
     );
     
     public static readonly ToolDescriptor WriteFile = new (
@@ -51,7 +56,49 @@ public static class ToolRegistry
         new ToolParameter(ToolParameterType.String, "command", "The command to execute", true)
     );
     
-    private static ToolResult ExecuteGetCurrentTyme(BinaryData arguments) => DateTime.Now.ToString("O");
+    private static ToolResult ExecuteGetCurrentTime(BinaryData arguments) => DateTime.Now.ToString("O");
+    
+    public sealed record ListDirectoryArgument(string dir_path);
+    private static ToolResult ExecuteListDirectory(BinaryData arguments)
+    {
+        var args = JsonSerializer.Deserialize<ListDirectoryArgument>(arguments);
+        if (args is null) return ToolResult.Error("Invalid tool arguments.");
+        
+        if (!Directory.Exists(args.dir_path)) return ToolResult.Error($"Directory '{args.dir_path}' does not exist.");
+        
+        var content = new DirectoryInfo(args.dir_path).EnumerateFileSystemInfos();
+        var sb = new StringBuilder();
+
+        var entries = content.Select(fsinfo => fsinfo switch
+            {
+                { LinkTarget: not null } => (object)new
+                {
+                    name   = fsinfo.Name,
+                    kind   = "symbolic_link",
+                    target = fsinfo.LinkTarget,
+                },
+                
+                DirectoryInfo => new
+                {
+                    name   = fsinfo.Name,
+                    kind   = "directory",
+                },
+                
+                FileInfo file => new
+                {
+                    name   = fsinfo.Name,
+                    kind   = "file",
+                    size   = (file.Length / 1024) + "KiB",
+                },
+                
+                _ => throw new ArgumentOutOfRangeException(nameof(fsinfo), fsinfo.GetType().Name),
+            }
+        ).ToArray();
+
+        var result = JsonSerializer.Serialize(entries);
+        return result;
+    }
+
     
     public sealed record ReadFileArguments(string file_path);
     private static ToolResult ExecuteReadFile(BinaryData arguments)
@@ -59,15 +106,9 @@ public static class ToolRegistry
         var args = JsonSerializer.Deserialize<ReadFileArguments>(arguments);
         if (args is null) return ToolResult.Error("Invalid tool arguments.");
                 
-        if (!File.Exists(args.file_path)) return ToolResult.Error($"File {args.file_path} does not exist.");
-                
-        Console.Error.WriteLine($"Reading file '{args.file_path}' ...");
+        if (!File.Exists(args.file_path)) return ToolResult.Error($"File '{args.file_path}' does not exist.");
+        
         var content = File.ReadAllText(args.file_path);
-                
-        Console.Error.WriteLine("\"\"\"");
-        Console.Error.WriteLine(content);
-        Console.Error.WriteLine("\"\"\"");
-                
         return content;
     }
     
@@ -80,13 +121,7 @@ public static class ToolRegistry
         var directory = Path.GetDirectoryName(args.file_path);
         if (string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) Directory.CreateDirectory(directory!);
         
-        Console.Error.WriteLine($"Writing file '{args.file_path}' ...");
         File.WriteAllText(args.file_path, args.file_content);
-        
-        Console.Error.WriteLine("\"\"\"");
-        Console.Error.WriteLine(args.file_content);
-        Console.Error.WriteLine("\"\"\"");
-                
         return "Success";
     }
     

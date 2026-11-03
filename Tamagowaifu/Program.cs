@@ -20,6 +20,7 @@ if (string.IsNullOrEmpty(apiKey))
 var client = ModelManager.GetChatClient(model);
 var toolSet = new ToolSet(
     ToolRegistry.GetCurrentTime,
+    ToolRegistry.ListDirectory,
     ToolRegistry.ReadFile,
     ToolRegistry.WriteFile,
     ToolRegistry.RunBashCmd
