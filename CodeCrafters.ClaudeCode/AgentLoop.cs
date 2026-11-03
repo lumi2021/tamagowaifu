@@ -30,7 +30,7 @@ public class AgentLoop(ChatClient client, ToolSet toolSet)
                 {
                     if (string.IsNullOrWhiteSpace(content.Text)) continue;
                     Console.Error.Write("Assistent: ");
-                    Console.Error.WriteLine(content.Text);
+                    Console.WriteLine(content.Text);
                 }
             
             // If there is any tool call
